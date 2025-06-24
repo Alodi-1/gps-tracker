@@ -13,40 +13,64 @@
   </style>
 </head>
 <body>
-  <h3 style="text-align:center;">Live GPS Location</h3>
-  <div id="map"></div>
+  <div id="login" style="text-align:center;margin-top:100px;">
+    <h2>Enter Password to View GPS Tracker</h2>
+    <input type="password" id="password" placeholder="Password" />
+    <button onclick="checkPassword()">Enter</button>
+    <p id="message" style="color:red;"></p>
+  </div>
+
+  <div id="map-container" style="display:none;">
+    <h3 style="text-align:center;">Live GPS Location</h3>
+    <div id="map"></div>
+  </div>
 
   <script>
-    // 🔧 Replace this with your Firebase config:
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "your-project-id.firebaseapp.com",
-      databaseURL: "https://your-project-id.firebaseio.com",
-      projectId: "your-project-id",
-      storageBucket: "your-project-id.appspot.com",
-      messagingSenderId: "SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
+    const correctPassword = "1122"; // 🔑 Set your password here
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    const map = L.map('map').setView([0, 0], 2);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-
-    const marker = L.marker([0, 0]).addTo(map).bindPopup("Waiting for GPS...");
-
-    db.ref("location").on("value", (snapshot) => {
-      const data = snapshot.val();
-      if (data && data.lat && data.lng) {
-        const lat = parseFloat(data.lat);
-        const lng = parseFloat(data.lng);
-        marker.setLatLng([lat, lng]).bindPopup(`Latitude: ${lat}<br>Longitude: ${lng}`).openPopup();
-        map.setView([lat, lng], 16);
+    function checkPassword() {
+      const input = document.getElementById("password").value;
+      if (input === correctPassword) {
+        document.getElementById("login").style.display = "none";
+        document.getElementById("map-container").style.display = "block";
+        startMap(); // load map only after password is correct
+      } else {
+        document.getElementById("message").innerText = "Incorrect password.";
       }
-    });
+    }
+
+    function startMap() {
+      // 🔁 Place your original Firebase + Leaflet map JS code here (from previous version)
+      const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "your-project-id.firebaseapp.com",
+        databaseURL: "https://your-project-id.firebaseio.com",
+        projectId: "your-project-id",
+        storageBucket: "your-project-id.appspot.com",
+        messagingSenderId: "SENDER_ID",
+        appId: "YOUR_APP_ID"
+      };
+
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.database();
+
+      const map = L.map('map').setView([0, 0], 2);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+
+      const marker = L.marker([0, 0]).addTo(map).bindPopup("Waiting for GPS...");
+
+      db.ref("location").on("value", (snapshot) => {
+        const data = snapshot.val();
+        if (data && data.lat && data.lng) {
+          const lat = parseFloat(data.lat);
+          const lng = parseFloat(data.lng);
+          marker.setLatLng([lat, lng]).bindPopup(`Latitude: ${lat}<br>Longitude: ${lng}`).openPopup();
+          map.setView([lat, lng], 16);
+        }
+      });
+    }
   </script>
 </body>
 </html>
