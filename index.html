@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Live GPS Tracker</title>
+  <title>Live GPS Tracker with Geofence</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -26,6 +26,7 @@
       padding: 10px 20px;
       font-size: 1rem;
     }
+    #status { position: absolute; top: 10px; left: 10px; background: white; padding: 10px; border-radius: 8px; z-index: 999; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -36,10 +37,10 @@
     <p id="errorMsg" style="color: red;"></p>
   </div>
 
+  <div id="status">Checking location...</div>
   <div id="map"></div>
 
   <script>
-    // ✅ Set your password here:
     const correctPassword = "1122";
 
     function checkPassword() {
@@ -47,6 +48,7 @@
       if (entered === correctPassword) {
         document.getElementById("passwordPrompt").style.display = "none";
         document.getElementById("map").style.display = "block";
+        document.getElementById("status").style.display = "block";
         initMap();
       } else {
         document.getElementById("errorMsg").textContent = "Incorrect password.";
@@ -54,7 +56,7 @@
     }
 
     function initMap() {
-      // 🔧 Replace with your Firebase config:
+      // 🔧 Replace with your actual Firebase config:
       const firebaseConfig = {
         apiKey: "AIzaSyAgwPeRTOzcKlKvKXNd5SATgPzzaYWAq2A",
         authDomain: "gps-map-3d512.firebaseapp.com",
@@ -75,15 +77,49 @@
 
       const marker = L.marker([0, 0]).addTo(map).bindPopup("Waiting for GPS...");
 
+      // ✅ Geofence settings
+      const geofenceCenter = { lat: 8.545822, lng: 76.921762 }; // 🔧 Change to your geofence center
+      const geofenceRadius = 100; // meters
+
+      const circle = L.circle([geofenceCenter.lat, geofenceCenter.lng], {
+        color: 'blue',
+        fillColor: '#cceeff',
+        fillOpacity: 0.3,
+        radius: geofenceRadius
+      }).addTo(map);
+
+      function getDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371e3;
+        const φ1 = lat1 * Math.PI/180;
+        const φ2 = lat2 * Math.PI/180;
+        const Δφ = (lat2 - lat1) * Math.PI/180;
+        const Δλ = (lon2 - lon1) * Math.PI/180;
+        const a = Math.sin(Δφ/2)**2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2)**2;
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+      }
+
       db.ref("location").on("value", (snapshot) => {
         const data = snapshot.val();
         if (data && data.lat && data.lng) {
           const lat = parseFloat(data.lat);
           const lng = parseFloat(data.lng);
+
           marker.setLatLng([lat, lng])
                 .bindPopup(`Lat: ${lat}<br>Lng: ${lng}`)
                 .openPopup();
           map.setView([lat, lng], 16);
+
+          const distance = getDistance(lat, lng, geofenceCenter.lat, geofenceCenter.lng);
+          const status = document.getElementById("status");
+
+          if (distance <= geofenceRadius) {
+            status.textContent = "🟢 Inside Geofence";
+            status.style.backgroundColor = "#d1ffd1";
+          } else {
+            status.textContent = "🔴 Outside Geofence";
+            status.style.backgroundColor = "#ffd1d1";
+          }
         }
       });
     }
