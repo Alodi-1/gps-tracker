@@ -8,51 +8,84 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <style>
-    #map { height: 92vh; width: 100%; }
     body { margin: 0; font-family: Arial, sans-serif; }
-    h3 { text-align: center; margin: 10px 0; }
+    #map { height: 92vh; width: 100%; display: none; }
+    #passwordPrompt {
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+    input[type="password"] {
+      padding: 10px;
+      font-size: 1rem;
+      margin: 5px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 1rem;
+    }
   </style>
 </head>
 <body>
-  <h3>Live GPS Location Tracker</h3>
+  <div id="passwordPrompt">
+    <h2>Enter Password to View Map</h2>
+    <input type="password" id="passwordInput" placeholder="Password">
+    <button onclick="checkPassword()">Submit</button>
+    <p id="errorMsg" style="color: red;"></p>
+  </div>
+
   <div id="map"></div>
 
   <script>
-    // 🔧 Replace with your Firebase config (from Firebase Console → Project Settings)
-    const firebaseConfig = {
-      apiKey: "AIzaSyAgwPeRTOzcKlKvKXNd5SATgPzzaYWAq2A",
-      authDomain: "gps-map-3d512.firebaseapp.com",
-      databaseURL: "https://gps-map-3d512-default-rtdb.firebaseio.com",
-      projectId: "gps-map-3d512",
-      storageBucket: "gps-map-3d512.firebasestorage.app",
-      messagingSenderId: "927895853462",
-      appId: "1:927895853462:web:676c28e166ebb0d91be5b7"
-    };
+    const correctPassword = "1122";
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    // Initialize Leaflet map
-    const map = L.map('map').setView([0, 0], 2);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: 'Map data © OpenStreetMap contributors'
-    }).addTo(map);
-
-    // Marker for GPS
-    const marker = L.marker([0, 0]).addTo(map).bindPopup("Waiting for GPS...");
-
-    // Update map on GPS data change
-    db.ref("location").on("value", (snapshot) => {
-      const data = snapshot.val();
-      if (data && data.lat && data.lng) {
-        const lat = parseFloat(data.lat);
-        const lng = parseFloat(data.lng);
-        marker.setLatLng([lat, lng])
-              .bindPopup(`Lat: ${lat}<br>Lng: ${lng}`)
-              .openPopup();
-        map.setView([lat, lng], 16);
+    function checkPassword() {
+      const entered = document.getElementById("passwordInput").value;
+      if (entered === correctPassword) {
+        document.getElementById("passwordPrompt").style.display = "none";
+        document.getElementById("map").style.display = "block";
+        initMap();
+      } else {
+        document.getElementById("errorMsg").textContent = "Incorrect password.";
       }
-    });
+    }
+
+    function initMap() {
+      // 🔧 Replace with your Firebase config:
+      const firebaseConfig = {
+        apiKey: "AIzaSyAgwPeRTOzcKlKvKXNd5SATgPzzaYWAq2A",
+        authDomain: "gps-map-3d512.firebaseapp.com",
+        databaseURL: "https://gps-map-3d512-default-rtdb.firebaseio.com",
+        projectId: "gps-map-3d512",
+        storageBucket: "gps-map-3d512.firebasestorage.app",
+        messagingSenderId: "927895853462",
+        appId: "1:927895853462:web:676c28e166ebb0d91be5b7"
+      };
+
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.database();
+
+      const map = L.map('map').setView([0, 0], 2);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: 'Map data © OpenStreetMap contributors'
+      }).addTo(map);
+
+      const marker = L.marker([0, 0]).addTo(map).bindPopup("Waiting for GPS...");
+
+      db.ref("location").on("value", (snapshot) => {
+        const data = snapshot.val();
+        if (data && data.lat && data.lng) {
+          const lat = parseFloat(data.lat);
+          const lng = parseFloat(data.lng);
+          marker.setLatLng([lat, lng])
+                .bindPopup(`Lat: ${lat}<br>Lng: ${lng}`)
+                .openPopup();
+          map.setView([lat, lng], 16);
+        }
+      });
+    }
   </script>
 </body>
 </html>
