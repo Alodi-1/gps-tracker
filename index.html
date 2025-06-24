@@ -29,34 +29,32 @@
   </style>
 </head>
 <body>
-  <div id="login" style="text-align:center;margin-top:100px;">
-    <h2>Enter Password to View GPS Tracker</h2>
-    <input type="password" id="password" placeholder="Password" />
-    <button onclick="checkPassword()">Enter</button>
-    <p id="message" style="color:red;"></p>
+  <div id="passwordPrompt">
+    <h2>Enter Password to View Map</h2>
+    <input type="password" id="passwordInput" placeholder="Password">
+    <button onclick="checkPassword()">Submit</button>
+    <p id="errorMsg" style="color: red;"></p>
   </div>
 
-  <div id="map-container" style="display:none;">
-    <h3 style="text-align:center;">Live GPS Location</h3>
-    <div id="map"></div>
-  </div>
+  <div id="map"></div>
 
   <script>
-    const correctPassword = "1122"; // 🔑 Set your password here
+    // ✅ Set your password here:
+    const correctPassword = "1122";
 
     function checkPassword() {
-      const input = document.getElementById("password").value;
-      if (input === correctPassword) {
-        document.getElementById("login").style.display = "none";
-        document.getElementById("map-container").style.display = "block";
-        startMap(); // load map only after password is correct
+      const entered = document.getElementById("passwordInput").value;
+      if (entered === correctPassword) {
+        document.getElementById("passwordPrompt").style.display = "none";
+        document.getElementById("map").style.display = "block";
+        initMap();
       } else {
-        document.getElementById("message").innerText = "Incorrect password.";
+        document.getElementById("errorMsg").textContent = "Incorrect password.";
       }
     }
 
-    function startMap() {
-      // 🔁 Place your original Firebase + Leaflet map JS code here (from previous version)
+    function initMap() {
+      // 🔧 Replace with your Firebase config:
       const firebaseConfig = {
         apiKey: "AIzaSyAgwPeRTOzcKlKvKXNd5SATgPzzaYWAq2A",
         authDomain: "gps-map-3d512.firebaseapp.com",
@@ -72,7 +70,7 @@
 
       const map = L.map('map').setView([0, 0], 2);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
+        attribution: 'Map data © OpenStreetMap contributors'
       }).addTo(map);
 
       const marker = L.marker([0, 0]).addTo(map).bindPopup("Waiting for GPS...");
@@ -82,7 +80,9 @@
         if (data && data.lat && data.lng) {
           const lat = parseFloat(data.lat);
           const lng = parseFloat(data.lng);
-          marker.setLatLng([lat, lng]).bindPopup(`Latitude: ${lat}<br>Longitude: ${lng}`).openPopup();
+          marker.setLatLng([lat, lng])
+                .bindPopup(`Lat: ${lat}<br>Lng: ${lng}`)
+                .openPopup();
           map.setView([lat, lng], 16);
         }
       });
